@@ -1,0 +1,11 @@
+{
+  "name": "CleRB_JS_Testing",
+  "version": "0.0.1",
+  "engines": {
+    "node": "0.6.6"
+  },
+  "dependencies":{
+    "mocha": "*",
+    "should": "*"
+  }
+}

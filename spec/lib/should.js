@@ -1,6 +1,7 @@
+
 /*!
  * Should
- * Copyright(c) 2010 TJ Holowaychuk <tj@vision-media.ca>
+ * Copyright(c) 2010-2012 TJ Holowaychuk <tj@vision-media.ca>
  * MIT Licensed
  */
 
@@ -18,7 +19,7 @@ var util = require('util')
 
 /**
  * Expose assert as should.
- * 
+ *
  * This allows you to do things like below
  * without require()ing the assert module.
  *
@@ -32,16 +33,16 @@ exports = module.exports = assert;
  * Library version.
  */
 
-exports.version = '0.5.1';
+exports.version = '0.6.3';
 
 /**
  * Assert _obj_ exists, with optional message.
  *
  * @param {Mixed} obj
- * @param {String} msg
+ * @param {String} [msg]
  * @api public
  */
- 
+
 exports.exist = function(obj, msg){
   if (null == obj) {
     throw new AssertionError({
@@ -55,7 +56,7 @@ exports.exist = function(obj, msg){
  * Asserts _obj_ does not exist, with optional message.
  *
  * @param {Mixed} obj
- * @param {String} msg
+ * @param {String} [msg]
  * @api public
  */
 
@@ -78,7 +79,7 @@ exports.not.exist = function(obj, msg){
 Object.defineProperty(Object.prototype, 'should', {
   set: function(){},
   get: function(){
-    return new Assertion(this);
+    return new Assertion(Object(this).valueOf());
   },
   configurable: true
 });
@@ -103,7 +104,7 @@ Assertion.prototype = {
   /**
    * HACK: prevents double require() from failing.
    */
-  
+
   exports: exports,
 
   /**
@@ -112,15 +113,19 @@ Assertion.prototype = {
    * @param {Boolean} expr
    * @param {String} msg
    * @param {String} negatedMsg
+   * @param {Object} expected
    * @api private
    */
 
-  assert: function(expr, msg, negatedMsg){
+  assert: function(expr, msg, negatedMsg, expected){
     var msg = this.negate ? negatedMsg : msg
       , ok = this.negate ? !expr : expr;
+
     if (!ok) {
       throw new AssertionError({
           message: msg
+        , actual: this.obj
+        , expected: expected
         , stackStartFunction: this.assert
       });
     }
@@ -131,27 +136,27 @@ Assertion.prototype = {
    *
    * @api public
    */
-  
+
   get an() {
     return this;
   },
-  
+
   /**
    * Dummy getter.
    *
    * @api public
    */
-  
+
   get and() {
     return this;
   },
-  
+
   /**
    * Dummy getter.
    *
    * @api public
    */
-  
+
   get be() {
     return this;
   },
@@ -161,39 +166,39 @@ Assertion.prototype = {
    *
    * @api public
    */
-  
+
   get have() {
     return this;
   },
-  
+
   /**
    * Dummy getter.
    *
    * @api public
    */
-  
+
   get with() {
     return this;
   },
-  
+
   /**
    * Negation modifier.
    *
    * @api public
    */
-  
+
   get not() {
     this.negate = true;
     return this;
   },
-  
+
   /**
    * Get object inspection string.
    *
    * @return {String}
    * @api private
    */
-  
+
   get inspect() {
     return i(this.obj);
   },
@@ -217,7 +222,7 @@ Assertion.prototype = {
    *
    * @api public
    */
-  
+
   get empty() {
     this.obj.should.have.property('length');
     this.assert(
@@ -232,7 +237,7 @@ Assertion.prototype = {
    *
    * @api public
    */
-  
+
   get ok() {
     this.assert(
         this.obj
@@ -240,13 +245,13 @@ Assertion.prototype = {
       , 'expected ' + this.inspect + ' to be falsey');
     return this;
   },
-  
+
   /**
    * Assert true.
    *
    * @api public
    */
-  
+
   get true() {
     this.assert(
         true === this.obj
@@ -254,13 +259,13 @@ Assertion.prototype = {
       , 'expected ' + this.inspect + ' not to be true');
     return this;
   },
-  
+
   /**
    * Assert false.
    *
    * @api public
    */
-  
+
   get false() {
     this.assert(
         false === this.obj
@@ -268,48 +273,50 @@ Assertion.prototype = {
       , 'expected ' + this.inspect + ' not to be false');
     return this;
   },
-  
+
   /**
-   * Assert equal. 
+   * Assert equal.
    *
    * @param {Mixed} val
    * @param {String} description
    * @api public
    */
-  
+
   eql: function(val, desc){
     this.assert(
         eql(val, this.obj)
       , 'expected ' + this.inspect + ' to equal ' + i(val) + (desc ? " | " + desc : "")
-      , 'expected ' + this.inspect + ' to not equal ' + i(val) + (desc ? " | " + desc : ""));
+      , 'expected ' + this.inspect + ' to not equal ' + i(val) + (desc ? " | " + desc : "")
+      , val);
     return this;
   },
-  
+
   /**
-   * Assert strict equal. 
+   * Assert strict equal.
    *
    * @param {Mixed} val
    * @param {String} description
    * @api public
    */
-  
+
   equal: function(val, desc){
     this.assert(
-        val === this.obj
+        val.valueOf() === this.obj
       , 'expected ' + this.inspect + ' to equal ' + i(val) + (desc ? " | " + desc : "")
-      , 'expected ' + this.inspect + ' to not equal ' + i(val) + (desc ? " | " + desc : ""));
+      , 'expected ' + this.inspect + ' to not equal ' + i(val) + (desc ? " | " + desc : "")
+      , val);
     return this;
   },
-  
+
   /**
-   * Assert within start to finish (inclusive). 
+   * Assert within start to finish (inclusive).
    *
    * @param {Number} start
    * @param {Number} finish
    * @param {String} description
    * @api public
    */
-  
+
   within: function(start, finish, desc){
     var range = start + '..' + finish;
     this.assert(
@@ -318,15 +325,15 @@ Assertion.prototype = {
       , 'expected ' + this.inspect + ' to not be within ' + range + (desc ? " | " + desc : ""));
     return this;
   },
-  
+
   /**
-   * Assert typeof. 
+   * Assert typeof.
    *
    * @param {Mixed} type
    * @param {String} description
    * @api public
    */
-  
+
   a: function(type, desc){
     this.assert(
         type == typeof this.obj
@@ -334,15 +341,15 @@ Assertion.prototype = {
       , 'expected ' + this.inspect + ' not to be a ' + type  + (desc ? " | " + desc : ""));
     return this;
   },
-  
+
   /**
-   * Assert instanceof. 
+   * Assert instanceof.
    *
    * @param {Function} constructor
    * @param {String} description
    * @api public
    */
-  
+
   instanceof: function(constructor, desc){
     var name = constructor.name;
     this.assert(
@@ -359,7 +366,7 @@ Assertion.prototype = {
    * @param {String} description
    * @api public
    */
-  
+
   above: function(n, desc){
     this.assert(
         this.obj > n
@@ -367,7 +374,7 @@ Assertion.prototype = {
       , 'expected ' + this.inspect + ' to be below ' + n + (desc ? " | " + desc : ""));
     return this;
   },
-  
+
   /**
    * Assert numeric value below _n_.
    *
@@ -375,7 +382,7 @@ Assertion.prototype = {
    * @param {String} description
    * @api public
    */
-  
+
   below: function(n, desc){
     this.assert(
         this.obj < n
@@ -383,7 +390,7 @@ Assertion.prototype = {
       , 'expected ' + this.inspect + ' to be above ' + n + (desc ? " | " + desc : ""));
     return this;
   },
-  
+
   /**
    * Assert string value matches _regexp_.
    *
@@ -391,7 +398,7 @@ Assertion.prototype = {
    * @param {String} description
    * @api public
    */
-  
+
   match: function(regexp, desc){
     this.assert(
         regexp.exec(this.obj)
@@ -399,7 +406,7 @@ Assertion.prototype = {
       , 'expected ' + this.inspect + ' not to match ' + regexp + (desc ? " | " + desc : ""));
     return this;
   },
-  
+
   /**
    * Assert property "length" exists and has value of _n_.
    *
@@ -407,7 +414,7 @@ Assertion.prototype = {
    * @param {String} description
    * @api public
    */
-  
+
   length: function(n, desc){
     this.obj.should.have.property('length');
     var len = this.obj.length;
@@ -422,11 +429,11 @@ Assertion.prototype = {
    * Assert property _name_ exists, with optional _val_.
    *
    * @param {String} name
-   * @param {Mixed} val
+   * @param {Mixed} [val]
    * @param {String} description
    * @api public
    */
-  
+
   property: function(name, val, desc){
     if (this.negate && undefined !== val) {
       if (undefined === this.obj[name]) {
@@ -438,7 +445,7 @@ Assertion.prototype = {
         , 'expected ' + this.inspect + ' to have a property ' + i(name) + (desc ? " | " + desc : "")
         , 'expected ' + this.inspect + ' to not have a property ' + i(name) + (desc ? " | " + desc : ""));
     }
-    
+
     if (undefined !== val) {
       this.assert(
           val === this.obj[name]
@@ -450,7 +457,7 @@ Assertion.prototype = {
     this.obj = this.obj[name];
     return this;
   },
-  
+
   /**
    * Assert own property _name_ exists.
    *
@@ -458,7 +465,7 @@ Assertion.prototype = {
    * @param {String} description
    * @api public
    */
-  
+
   ownProperty: function(name, desc){
     this.assert(
         this.obj.hasOwnProperty(name)
@@ -476,14 +483,22 @@ Assertion.prototype = {
    */
 
   include: function(obj, desc){
-    this.assert(
-        ~this.obj.indexOf(obj)
-      , 'expected ' + this.inspect + ' to include ' + i(obj) + (desc ? " | " + desc : "")
-      , 'expected ' + this.inspect + ' to not include ' + i(obj) + (desc ? " | " + desc : ""));
-
+    if (obj.constructor == Object){
+      var cmp = {};
+      for (var key in obj) cmp[key] = this.obj[key];
+      this.assert(
+          eql(cmp, obj)
+        , 'expected ' + this.inspect + ' to include an object equal to ' + i(obj) + (desc ? " | " + desc : "")
+        , 'expected ' + this.inspect + ' to not include an object equal to ' + i(obj) + (desc ? " | " + desc : ""));
+    } else {
+      this.assert(
+          ~this.obj.indexOf(obj)
+        , 'expected ' + this.inspect + ' to include ' + i(obj) + (desc ? " | " + desc : "")
+        , 'expected ' + this.inspect + ' to not include ' + i(obj) + (desc ? " | " + desc : ""));
+    }
     return this;
   },
-  
+
   /**
    * Assert that an object equal to `obj` is present.
    *
@@ -516,7 +531,7 @@ Assertion.prototype = {
       , 'expected ' + this.inspect + ' to not contain ' + i(obj));
     return this;
   },
-  
+
   /**
    * Assert exact keys or inclusion of keys by using
    * the `.include` modifier.
@@ -524,7 +539,7 @@ Assertion.prototype = {
    * @param {Array|String ...} keys
    * @api public
    */
-  
+
   keys: function(keys){
     var str
       , ok = true;
@@ -567,9 +582,9 @@ Assertion.prototype = {
 
     return this;
   },
-  
+
   /**
-   * Assert that header `field` has the given `val`. 
+   * Assert that header `field` has the given `val`.
    *
    * @param {String} field
    * @param {String} val
@@ -583,7 +598,7 @@ Assertion.prototype = {
       .have.property(field.toLowerCase(), val);
     return this;
   },
-  
+
   /**
    * Assert `.statusCode` of `code`.
    *
@@ -616,6 +631,7 @@ Assertion.prototype = {
     this.obj.should.have.property('headers');
     this.obj.headers.should.have.property('content-type');
     this.obj.headers['content-type'].should.include('application/json');
+    return this;
   },
 
   /**
@@ -629,6 +645,7 @@ Assertion.prototype = {
     this.obj.should.have.property('headers');
     this.obj.headers.should.have.property('content-type');
     this.obj.headers['content-type'].should.include('text/html');
+    return this;
   },
 
   /**
@@ -676,7 +693,7 @@ Assertion.prototype = {
     return this;
   }
 };
-
+Assertion.prototype.instanceOf = Assertion.prototype.instanceof;
 /**
  * Aliases.
  */
